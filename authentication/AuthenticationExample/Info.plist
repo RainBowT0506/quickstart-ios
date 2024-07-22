@@ -22,9 +22,11 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string></string>
+			<string>Twitter Sign In</string>
 			<key>CFBundleURLSchemes</key>
-			<array/>
+			<array>
+				<string>app-1-667289559239-ios-18635142eb4eeb07941ee2</string>
+			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
