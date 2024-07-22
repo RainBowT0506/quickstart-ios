@@ -142,6 +142,22 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		A6A14A802C4EC742005DD33C /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Helper;
+			sourceTree = "<group>";
+		};
+		A6A14A812C4ED7D1005DD33C /* Tab */ = {
+			isa = PBXGroup;
+			children = (
+				EAE4CBC824855E3A00245E92 /* AuthViewController.swift */,
+				EAB3A17B2494628200385291 /* UserViewController.swift */,
+			);
+			path = Tab;
+			sourceTree = "<group>";
+		};
 		CE54897B57069002714B8FA5 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -169,10 +185,9 @@
 		EA20B47524973B5100B5E581 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				A6A14A812C4ED7D1005DD33C /* Tab */,
 				EAE08EB424CF5D09006FA3A5 /* AccountLinkingViewController.swift */,
-				EAE4CBC824855E3A00245E92 /* AuthViewController.swift */,
 				EAE4CBF424857A5100245E92 /* LoginController.swift */,
-				EAB3A17B2494628200385291 /* UserViewController.swift */,
 				EA02F68E24A0714B0079D000 /* OtherAuthMethodControllers */,
 			);
 			path = ViewControllers;
@@ -252,6 +267,7 @@
 		EAE4CBC324855E3A00245E92 /* AuthenticationExample */ = {
 			isa = PBXGroup;
 			children = (
+				A6A14A802C4EC742005DD33C /* Helper */,
 				EA062D5C24A0FEB6006714D3 /* README.md */,
 				EA20B506249CA63300B5E581 /* AuthenticationExample.entitlements */,
 				EAE4CBC424855E3A00245E92 /* AppDelegate.swift */,

@@ -16,24 +16,24 @@ import UIKit
 import FirebaseAuth
 
 class CustomAuthViewController: OtherAuthViewController {
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    configureUI(for: .Custom)
-  }
-
-  override func buttonTapped() {
-    guard let token = textField.text, !token.isEmpty else { return }
-    customAuthLogin(token: token)
-  }
-
-  // MARK: - Firebase 🔥
-
-  private func customAuthLogin(token: String) {
-    Auth.auth().signIn(withCustomToken: token) { result, error in
-      guard error == nil else { return self.displayError(error) }
-      self.navigationController?.dismiss(animated: true, completion: {
-        self.delegate?.loginDidOccur()
-      })
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        configureUI(for: .Custom)
     }
-  }
+    
+    override func buttonTapped() {
+        guard let token = textField.text, !token.isEmpty else { return }
+        customAuthLogin(token: token)
+    }
+    
+    // MARK: - Firebase 🔥
+    
+    private func customAuthLogin(token: String) {
+        Auth.auth().signIn(withCustomToken: token) { result, error in
+            guard error == nil else { return self.displayError(error) }
+            self.navigationController?.dismiss(animated: true, completion: {
+                self.delegate?.loginDidOccur()
+            })
+        }
+    }
 }

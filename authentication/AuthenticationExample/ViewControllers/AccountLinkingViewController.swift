@@ -28,87 +28,87 @@ import CryptoKit
 
 class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate {
   var dataSourceProvider: DataSourceProvider<AuthProvider>!
-
+  
   var tableView: UITableView { view as! UITableView }
-
+  
   override func loadView() {
     view = UITableView(frame: .zero, style: .insetGrouped)
   }
-
+  
   let user: User
-
+  
   /// Designated initializer requires a valid, non-nil Firebase user.
   /// - Parameter user: An instance of a Firebase `User`.
   init(for user: User) {
     self.user = user
     super.init(nibName: nil, bundle: nil)
   }
-
+  
   @available(*, unavailable)
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-
+  
   override func viewDidLoad() {
     super.viewDidLoad()
     configureNavigationBar()
     configureDataSourceProvider()
     registerForLoginNotifications()
   }
-
+  
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationController?.setTitleColor(.systemOrange)
   }
-
+  
   // MARK: - DataSourceProviderDelegate
-
+  
   func didSelectRowAt(_ indexPath: IndexPath, on tableView: UITableView) {
     let item = dataSourceProvider.item(at: indexPath)
-
+    
     let providerName = item.title!
-
+    
     guard let provider = AuthProvider(rawValue: providerName) else {
       // The row tapped has no affiliated action.
       return
     }
-
+    
     // If the item's affiliated provider is currently linked with the user,
     // unlink the provider from the user's account.
     if item.isChecked {
       unlinkFromProvider(provider.id)
       return
     }
-
+    
     switch provider {
     case .google:
       performGoogleAccountLink()
-
+      
     case .apple:
       performAppleAccountLink()
-
+      
     case .facebook:
       performFacebookAccountLink()
-
+      
     case .twitter, .microsoft, .gitHub, .yahoo:
       performOAuthAccountLink(for: provider)
-
+      
     case .emailPassword:
       performEmailPasswordAccountLink()
-
+      
     case .passwordless:
       performPasswordlessAccountLink()
-
+      
     case .phoneNumber:
       performPhoneNumberAccountLink()
-
+      
     default:
       break
     }
   }
-
+  
   // MARK: Firebase 🔥
-
+  
   /// Wrapper method that uses Firebase's `link(with:)` API to link a user to another auth provider.
   /// Used when linking a user to each of the following auth providers.
   /// This method will update the UI upon the linking's completion.
@@ -119,7 +119,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       self.updateUI()
     }
   }
-
+  
   /// Wrapper method that uses Firebase's `unlink(fromProvider:)` API to unlink a user from an auth provider.
   /// This method will update the UI upon the unlinking's completion.
   /// - Parameter providerID: The string id of the auth provider.
@@ -130,25 +130,25 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       self.updateUI()
     }
   }
-
+  
   // MARK: - Sign in with Google Account Linking 🔥
-
+  
   /// This method will initate the Google Sign In flow.
   /// See this class's conformance to `GIDSignInDelegate` below for
   /// context on how the linking is made.
   private func performGoogleAccountLink() {
     guard let clientID = FirebaseApp.app()?.options.clientID else { return }
-
+    
     // Create Google Sign In configuration object.
     // TODO: Move configuration to Info.plist
     let config = GIDConfiguration(clientID: clientID)
     GIDSignIn.sharedInstance.configuration = config
-
+    
     // Start the sign in flow!
     GIDSignIn.sharedInstance.signIn(withPresenting: self) { [unowned self] result, error in
-
+      
       guard error == nil else { return displayError(error) }
-
+      
       guard
         let user = result?.user,
         let idToken = user.idToken?.tokenString
@@ -162,20 +162,20 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
         )
         return displayError(error)
       }
-
+      
       let credential = GoogleAuthProvider.credential(withIDToken: idToken,
                                                      accessToken: user.accessToken.tokenString)
-
+      
       // Rather than use the credential to sign in the user, we will use it to link to the currently signed in user's account.
       linkAccount(authCredential: credential)
     }
   }
-
+  
   // MARK: - Sign in with Apple Account Linking 🔥
-
+  
   // For Sign in with Apple
   var currentNonce: String?
-
+  
   /// This method will initate the Sign In with Apple flow.
   /// See this class's conformance to `ASAuthorizationControllerDelegate` below for
   /// context on how the linking is made.
@@ -187,7 +187,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       let request = appleIDProvider.createRequest()
       request.requestedScopes = [.fullName, .email]
       request.nonce = CryptoUtils.sha256(nonce)
-
+      
       let authorizationController = ASAuthorizationController(authorizationRequests: [request])
       authorizationController.delegate = self
       authorizationController.presentationContextProvider = self
@@ -197,12 +197,12 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       displayError(error)
     }
   }
-
+  
   // MARK: - Twitter, Microsoft, GitHub, Yahoo Account Linking 🔥
-
+  
   // Maintain a strong reference to an OAuthProvider for login
   private var oauthProvider: OAuthProvider!
-
+  
   private func performOAuthAccountLink(for provider: AuthProvider) {
     oauthProvider = OAuthProvider(providerID: provider.id)
     oauthProvider.getCredentialWith(nil) { [weak self] credential, error in
@@ -212,14 +212,14 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       strongSelf.linkAccount(authCredential: credential)
     }
   }
-
+  
   // MARK: - Sign in with Facebook Account Linking 🔥
-
+  
   private func performFacebookAccountLink() {
     // The following config can also be stored in the project's .plist
     Settings.shared.appID = "ENTER APP ID HERE"
     Settings.shared.displayName = "AuthenticationExample"
-
+    
     // Create a Facebook `LoginManager` instance
     let loginManager = LoginManager()
     loginManager.logIn(permissions: ["email"], from: self) { [weak self] result, error in
@@ -230,9 +230,9 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       strongSelf.linkAccount(authCredential: credential)
     }
   }
-
+  
   // MARK: - Email & Password Login Account Linking 🔥
-
+  
   private func performEmailPasswordAccountLink() {
     presentEmailPasswordLinkAlertController { [weak self] email, password in
       guard let strongSelf = self else { return }
@@ -240,9 +240,9 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       strongSelf.linkAccount(authCredential: credential)
     }
   }
-
+  
   // MARK: - Phone Number Account Linking 🔥
-
+  
   public func performPhoneNumberAccountLink() {
     presentPhoneNumberAlertController { [weak self] phoneNumber in
       let phoneNumber = String(format: "+%@", phoneNumber)
@@ -259,7 +259,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
         }
     }
   }
-
+  
   private func presentPhoneNumberAlertController(linkHandler: @escaping (String) -> Void) {
     presentTextFieldAlertController(
       title: "Link with Phone Auth",
@@ -268,7 +268,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       saveHandler: linkHandler
     )
   }
-
+  
   private func presentPhoneLinkAlertController(saveHandler: @escaping (String) -> Void) {
     presentTextFieldAlertController(
       title: "Link with Phone Auth",
@@ -276,22 +276,22 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       saveHandler: saveHandler
     )
   }
-
+  
   // MARK: - Email Link/Passwordless Account Linking 🔥
-
+  
   /// Similar to in `PasswordlessViewController`, enter the authorized domain.
   /// Please refer to this Quickstart's README for more information.
   private let authorizedDomain: String = "ENTER AUTHORIZED DOMAIN"
   /// Maintain a reference to the email entered for linking user to Passwordless.
   private var email: String?
-
+  
   private func performPasswordlessAccountLink() {
     presentPasswordlessAlertController { [weak self] email in
       guard let strongSelf = self else { return }
       strongSelf.sendSignInLink(to: email)
     }
   }
-
+  
   private func presentPasswordlessAlertController(saveHandler: @escaping (String) -> Void) {
     presentTextFieldAlertController(
       title: "Link with Passwordless Login",
@@ -300,7 +300,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       saveHandler: saveHandler
     )
   }
-
+  
   private func sendSignInLink(to email: String) {
     let actionCodeSettings = ActionCodeSettings()
     let stringURL = "https://\(authorizedDomain).firebaseapp.com/login?email=\(email)"
@@ -308,25 +308,25 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
     // The sign-in operation must be completed in the app.
     actionCodeSettings.handleCodeInApp = true
     actionCodeSettings.setIOSBundleID(Bundle.main.bundleIdentifier!)
-
+    
     Auth.auth().sendSignInLink(toEmail: email, actionCodeSettings: actionCodeSettings) { error in
       guard error == nil else { return self.displayError(error) }
-
+      
       // Set `email` property as it will be used to complete sign in after opening email link
       self.email = email
     }
   }
-
+  
   @objc
   private func passwordlessSignIn() {
     // Retrieve link that we stored in user defaults in `SceneDelegate`.
     guard let email = email,
-      let link = UserDefaults.standard.value(forKey: "Link") as? String else { return }
+          let link = UserDefaults.standard.value(forKey: "Link") as? String else { return }
     let credential = EmailAuthProvider.credential(withEmail: email, link: link)
     linkAccount(authCredential: credential)
     self.email = nil
   }
-
+  
   private func registerForLoginNotifications() {
     NotificationCenter.default.addObserver(
       self,
@@ -335,15 +335,15 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       object: nil
     )
   }
-
+  
   // MARK: - UI Configuration
-
+  
   private func configureNavigationBar() {
     navigationItem.title = "Account Linking"
     navigationItem.backBarButtonItem?.tintColor = .systemYellow
     navigationController?.navigationBar.prefersLargeTitles = true
   }
-
+  
   private func presentTextFieldAlertController(title: String? = nil,
                                                message: String? = nil,
                                                textfieldPlaceholder: String? = nil,
@@ -353,57 +353,57 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
       message: message,
       preferredStyle: .alert
     )
-
+    
     textFieldAlertController.addTextField { textfield in
       textfield.placeholder = textfieldPlaceholder
       textfield.textContentType = .oneTimeCode
     }
-
+    
     let onContinue: (UIAlertAction) -> Void = { _ in
       let text = textFieldAlertController.textFields!.first!.text!
       saveHandler(text)
     }
-
+    
     textFieldAlertController.addAction(
       UIAlertAction(title: "Continue", style: .default, handler: onContinue)
     )
-
+    
     textFieldAlertController.addAction(
       UIAlertAction(title: "Cancel", style: .cancel)
     )
-
+    
     present(textFieldAlertController, animated: true, completion: nil)
   }
-
+  
   private func presentEmailPasswordLinkAlertController(linkHandler: @escaping (String, String)
-    -> Void) {
+                                                       -> Void) {
     let loginAlertController = UIAlertController(
       title: "Link Password Auth",
       message: "Enter a valid email and password to link",
       preferredStyle: .alert
     )
-
+    
     ["Email", "Password"].forEach { placeholder in
       loginAlertController.addTextField { textfield in
         textfield.placeholder = placeholder
       }
     }
-
+    
     let onContinue: (UIAlertAction) -> Void = { _ in
       let email = loginAlertController.textFields![0].text!
       let password = loginAlertController.textFields![1].text!
       linkHandler(email, password)
     }
-
+    
     loginAlertController
       .addAction(UIAlertAction(title: "Continue", style: .default, handler: onContinue))
     loginAlertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
+    
     present(loginAlertController, animated: true, completion: nil)
   }
-
+  
   // MARK: - TableView Configuration & Refresh
-
+  
   private func configureDataSourceProvider() {
     dataSourceProvider = DataSourceProvider(
       dataSource: sections,
@@ -411,12 +411,12 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
     )
     dataSourceProvider.delegate = self
   }
-
+  
   private func updateUI() {
     configureDataSourceProvider()
     animateUpdates(for: tableView)
   }
-
+  
   private func animateUpdates(for tableView: UITableView) {
     UIView.transition(with: tableView, duration: 0.05,
                       options: .transitionCrossDissolve,
@@ -428,7 +428,7 @@ class AccountLinkingViewController: UIViewController, DataSourceProviderDelegate
 
 extension AccountLinkingViewController: DataSourceProvidable {
   var sections: [Section] { buildSections() }
-
+  
   private func buildSections() -> [Section] {
     var section = AuthProvider.authLinkSections.first!
     section.items = section.items.compactMap { item -> Item? in
@@ -439,7 +439,7 @@ extension AccountLinkingViewController: DataSourceProvidable {
     }
     return [section]
   }
-
+  
   private func userProviderDataContains(item: Item) -> Bool {
     guard let authProvider = AuthProvider(rawValue: item.title ?? "") else { return false }
     return user.providerData.map { $0.providerID }.contains(authProvider.id)
@@ -449,9 +449,9 @@ extension AccountLinkingViewController: DataSourceProvidable {
 // MARK: - Implementing Sign in with Apple with Firebase
 
 extension AccountLinkingViewController: ASAuthorizationControllerDelegate,
-  ASAuthorizationControllerPresentationContextProviding {
+                                        ASAuthorizationControllerPresentationContextProviding {
   // MARK: ASAuthorizationControllerDelegate
-
+  
   func authorizationController(controller: ASAuthorizationController,
                                didCompleteWithAuthorization authorization: ASAuthorization) {
     guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential
@@ -459,7 +459,7 @@ extension AccountLinkingViewController: ASAuthorizationControllerDelegate,
       print("Unable to retrieve AppleIDCredential")
       return
     }
-
+    
     guard let nonce = currentNonce else {
       fatalError("Invalid state: A login callback was received, but no login request was sent.")
     }
@@ -471,14 +471,14 @@ extension AccountLinkingViewController: ASAuthorizationControllerDelegate,
       print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
       return
     }
-
+    
     let credential = OAuthProvider.credential(withProviderID: "apple.com",
                                               idToken: idTokenString,
                                               rawNonce: nonce)
     // Once we have created the above `credential`, we can link accounts to it.
     linkAccount(authCredential: credential)
   }
-
+  
   func authorizationController(controller: ASAuthorizationController,
                                didCompleteWithError error: Error) {
     // Ensure that you have:
@@ -486,9 +486,9 @@ extension AccountLinkingViewController: ASAuthorizationControllerDelegate,
     //  - added the `Sign in with Apple` capability for this project
     print("Sign in with Apple errored: \(error)")
   }
-
+  
   // MARK: ASAuthorizationControllerPresentationContextProviding
-
+  
   func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
     return view.window!
   }
