@@ -41,8 +41,7 @@ class AuthViewController: UIViewController, DataSourceProviderDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureNavigationBar()
-        configureDataSourceProvider()
+         configureDataSourceProvider()
     }
     
     // MARK: - DataSourceProviderDelegate
@@ -58,32 +57,12 @@ class AuthViewController: UIViewController, DataSourceProviderDelegate {
         }
         
         switch provider {
-        case .google:
-            performGoogleSignInFlow()
-            
         case .apple:
             performAppleSignInFlow()
-            
-        case .facebook:
-            performFacebookSignInFlow()
-            
-        case .twitter, .microsoft, .gitHub, .yahoo:
+        case .google:
+            performGoogleSignInFlow()
+        case .twitter :
             performOAuthLoginFlow(for: provider)
-            
-        case .emailPassword:
-            performDemoEmailPasswordLoginFlow()
-            
-        case .passwordless:
-            performPasswordlessLoginFlow()
-            
-        case .phoneNumber:
-            performPhoneNumberLoginFlow()
-            
-        case .anonymous:
-            performAnonymousLoginFlow()
-            
-        case .custom:
-            performCustomAuthLoginFlow()
         }
     }
     
@@ -171,21 +150,6 @@ class AuthViewController: UIViewController, DataSourceProviderDelegate {
         }
     }
     
-    private func performFacebookSignInFlow() {
-        // The following config can also be stored in the project's .plist
-        Settings.shared.appID = kFacebookAppID
-        Settings.shared.displayName = "AuthenticationExample"
-        
-        // Create a Facebook `LoginManager` instance
-        let loginManager = LoginManager()
-        loginManager.logIn(permissions: ["email"], from: self) { result, error in
-            guard error == nil else { return self.displayError(error) }
-            guard let accessToken = AccessToken.current else { return }
-            let credential = FacebookAuthProvider.credential(withAccessToken: accessToken.tokenString)
-            self.signin(with: credential)
-        }
-    }
-    
     // Maintain a strong reference to an OAuthProvider for login
     private var oauthProvider: OAuthProvider!
     
@@ -196,41 +160,6 @@ class AuthViewController: UIViewController, DataSourceProviderDelegate {
             guard let credential = credential else { return }
             self.signin(with: credential)
         }
-    }
-    
-    private func performDemoEmailPasswordLoginFlow() {
-        let loginController = LoginController()
-        loginController.delegate = self
-        navigationController?.pushViewController(loginController, animated: true)
-    }
-    
-    private func performPasswordlessLoginFlow() {
-        let passwordlessViewController = PasswordlessViewController()
-        passwordlessViewController.delegate = self
-        let navPasswordlessAuthController =
-        UINavigationController(rootViewController: passwordlessViewController)
-        navigationController?.present(navPasswordlessAuthController, animated: true)
-    }
-    
-    private func performPhoneNumberLoginFlow() {
-        let phoneAuthViewController = PhoneAuthViewController()
-        phoneAuthViewController.delegate = self
-        let navPhoneAuthController = UINavigationController(rootViewController: phoneAuthViewController)
-        navigationController?.present(navPhoneAuthController, animated: true)
-    }
-    
-    private func performAnonymousLoginFlow() {
-        Auth.auth().signInAnonymously { result, error in
-            guard error == nil else { return self.displayError(error) }
-            self.transitionToUserViewController()
-        }
-    }
-    
-    private func performCustomAuthLoginFlow() {
-        let customAuthController = CustomAuthViewController()
-        customAuthController.delegate = self
-        let navCustomAuthController = UINavigationController(rootViewController: customAuthController)
-        navigationController?.present(navCustomAuthController, animated: true)
     }
     
     private func signin(with credential: AuthCredential) {
@@ -246,14 +175,6 @@ class AuthViewController: UIViewController, DataSourceProviderDelegate {
         let tableView = view as! UITableView
         dataSourceProvider = DataSourceProvider(dataSource: AuthProvider.sections, tableView: tableView)
         dataSourceProvider.delegate = self
-    }
-    
-    private func configureNavigationBar() {
-        navigationItem.title = "Firebase Auth"
-        guard let navigationBar = navigationController?.navigationBar else { return }
-        navigationBar.prefersLargeTitles = true
-        navigationBar.titleTextAttributes = [.foregroundColor: UIColor.systemOrange]
-        navigationBar.largeTitleTextAttributes = [.foregroundColor: UIColor.systemOrange]
     }
     
     private func transitionToUserViewController() {
